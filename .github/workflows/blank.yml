@@ -1,0 +1,60 @@
+import libvirt
+
+def conectar():
+    conn = libvirt.open("qemu:///system")
+    if conn is None:
+        raise Exception("Não foi possível conectar ao hypervisor.")
+    return conn
+
+def listar_vms(conn):
+    print("Máquinas Virtuais:")
+    for vm_id in conn.listDomainsID():
+        dom = conn.lookupByID(vm_id)
+        print(f"- {dom.name()} (Ligada)")
+
+    for nome in conn.listDefinedDomains():
+        print(f"- {nome} (Desligada)")
+
+def iniciar_vm(conn, nome):
+    dom = conn.lookupByName(nome)
+    if dom.isActive():
+        print(f"{nome} já está ligada.")
+    else:
+        dom.create()
+        print(f"{nome} iniciada.")
+
+def desligar_vm(conn, nome):
+    dom = conn.lookupByName(nome)
+    if dom.isActive():
+        dom.shutdown()
+        print(f"Desligando {nome}...")
+    else:
+        print(f"{nome} já está desligada.")
+
+def main():
+    conn = conectar()
+
+    while True:
+        print("\n=== Gerenciador de VM ===")
+        print("1 - Listar VMs")
+        print("2 - Iniciar VM")
+        print("3 - Desligar VM")
+        print("4 - Sair")
+
+        op = input("Escolha: ")
+
+        if op == "1":
+            listar_vms(conn)
+        elif op == "2":
+            iniciar_vm(conn, input("Nome da VM: "))
+        elif op == "3":
+            desligar_vm(conn, input("Nome da VM: "))
+        elif op == "4":
+            conn.close()
+            break
+        else:
+            print("Opção inválida.")
+
+if __name__ == "__main__":
+    main()
+    
